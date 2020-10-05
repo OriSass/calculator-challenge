@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MathOperation, operationTypes } from './MathOperation';
 import DigitButton from './DigitButton';
 
@@ -39,7 +39,16 @@ function Calc() {
   const [number2, setNumber2] = useState("");
   const [mathAction, setMathAction] = useState();
 
-  const buttons = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  useEffect(() => {
+    if(mathAction === 'x²'){
+      handleEqualize();
+    }
+    if(mathAction === '√'){
+      handleEqualize();
+    }
+  }, [mathAction])
+
+  const digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const addToNumber1 = (digitOrOperation) => setNumber1(prev => prev + digitOrOperation);
   const addToNumber2 = (digitOrOperation) => setNumber2(prev => prev + digitOrOperation);
   const reset = () => {
@@ -47,18 +56,23 @@ function Calc() {
     setNumber2('');
     setMathAction('');
   }
+  const addDigit = (digit) => {
+    if(!mathAction){
+      addToNumber1(digit);
+    }
+    else addToNumber2(digit);
+  }
   const handleEqualize = () => {
     let result;
-    // debugger;
     console.log(mathAction);
     if(mathAction === '√'){
-      result = calculate('sqrt', parseInt(number2));
+      result = calculate('sqrt',parseFloat(number1));
     }
     else if(mathAction === 'x²'){
-      result = calculate('power', parseInt(number1));
+      result = calculate('power', parseFloat(number1));
     }
     else {
-      result = calculate(mathAction, parseInt(number1), parseInt(number2));
+      result = calculate(mathAction, parseFloat(number1), parseFloat(number2));
       if(result === Infinity){
          result = 'Error'
       };
@@ -66,35 +80,37 @@ function Calc() {
     reset();
     setNumber1(result);
   }
+  const printMathButton = (action) => {
+    let handleFunction = (action) => {
+      if(mathAction){
+        handleEqualize();
+      } 
+      setMathAction(action);
+     }
+    switch(action){
+      case 'AC':
+        handleFunction = () => reset()
+        break;
+      case 'equal': 
+        handleFunction = () => handleEqualize()
+        break;
+      case 'dot':
+        handleFunction = () => addDigit('.')
+        break;   
+    }
+    return <MathOperation type={action} onClick={handleFunction} />
+  }
   return (
     <div className='calculator'>
       <div className='result'>
+      {!number1 && !mathAction && !number2 ? 0 : ''}
         {number1} {mathAction} {number2}
       </div>
       <div className='calculator-digits'>
-      {buttons.map(buttonValue =>
-       <DigitButton value={buttonValue}
-        onClick={!mathAction ?
-         () => addToNumber1(buttonValue):
-         () => addToNumber2(buttonValue)
-         } />)}
-      {operationTypes.map(operationType => {
-        
-        if(operationType === 'AC'){
-          return <MathOperation type={operationType} onClick={() => {
-            reset();
-          }} />
-        }
-        if(operationType === 'equal'){
-          return <MathOperation type={operationType}
-           onClick={() => handleEqualize()}
-         />
-        }
-        else{
-          return <MathOperation type={operationType}
-           onClick={(action) => {setMathAction(action)}} />
-        }
-      })}
+      {digits.map(digit => <DigitButton value={digit}
+                           onClick={() => addDigit(digit)} />)}
+      {operationTypes.map(operationType => printMathButton(operationType))}
+      
       </div>
     </div>
   );

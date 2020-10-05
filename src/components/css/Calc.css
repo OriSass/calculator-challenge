@@ -73,3 +73,6 @@ button {
 .digits button {
   flex: 1 0 26%;
 }
+.result{
+  background-color: rgb(161, 156, 156);
+}
